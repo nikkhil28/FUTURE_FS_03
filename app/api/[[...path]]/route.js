@@ -1,104 +1,171 @@
-import { MongoClient } from 'mongodb'
-import { v4 as uuidv4 } from 'uuid'
-import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, getDoc, doc, addDoc, query, where } from 'firebase/firestore';
 
-// MongoDB connection
-let client
-let db
-
-async function connectToMongo() {
-  if (!client) {
-    client = new MongoClient(process.env.MONGO_URL)
-    await client.connect()
-    db = client.db(process.env.DB_NAME)
-  }
-  return db
-}
-
-// Helper function to handle CORS
-function handleCORS(response) {
-  response.headers.set('Access-Control-Allow-Origin', process.env.CORS_ORIGINS || '*')
-  response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
-  response.headers.set('Access-Control-Allow-Credentials', 'true')
-  return response
-}
-
-// OPTIONS handler for CORS
-export async function OPTIONS() {
-  return handleCORS(new NextResponse(null, { status: 200 }))
-}
-
-// Route handler function
-async function handleRoute(request, { params }) {
-  const { path = [] } = params
-  const route = `/${path.join('/')}`
-  const method = request.method
-
+// GET handler
+export async function GET(request, { params }) {
+  const pathname = params?.path ? params.path.join('/') : '';
+  
   try {
-    const db = await connectToMongo()
-
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
-    if (route === '/root' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
-    }
-    // Root endpoint - GET /api/root (since /api/ is not accessible with catch-all)
-    if (route === '/' && method === 'GET') {
-      return handleCORS(NextResponse.json({ message: "Hello World" }))
-    }
-
-    // Status endpoints - POST /api/status
-    if (route === '/status' && method === 'POST') {
-      const body = await request.json()
+    // Get all products
+    if (pathname === 'products' || pathname === '') {
+      const productsRef = collection(db, 'products');
+      const snapshot = await getDocs(productsRef);
+      const products = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       
-      if (!body.client_name) {
-        return handleCORS(NextResponse.json(
-          { error: "client_name is required" }, 
-          { status: 400 }
-        ))
-      }
-
-      const statusObj = {
-        id: uuidv4(),
-        client_name: body.client_name,
-        timestamp: new Date()
-      }
-
-      await db.collection('status_checks').insertOne(statusObj)
-      return handleCORS(NextResponse.json(statusObj))
+      return NextResponse.json({ products });
     }
-
-    // Status endpoints - GET /api/status
-    if (route === '/status' && method === 'GET') {
-      const statusChecks = await db.collection('status_checks')
-        .find({})
-        .limit(1000)
-        .toArray()
-
-      // Remove MongoDB's _id field from response
-      const cleanedStatusChecks = statusChecks.map(({ _id, ...rest }) => rest)
+    
+    // Get products by category
+    if (pathname.startsWith('products/category/')) {
+      const category = pathname.split('/').pop();
+      const productsRef = collection(db, 'products');
+      const q = query(productsRef, where('category', '==', category));
+      const snapshot = await getDocs(q);
+      const products = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
       
-      return handleCORS(NextResponse.json(cleanedStatusChecks))
+      return NextResponse.json({ products });
     }
-
-    // Route not found
-    return handleCORS(NextResponse.json(
-      { error: `Route ${route} not found` }, 
-      { status: 404 }
-    ))
-
+    
+    // Get single product
+    if (pathname.startsWith('products/')) {
+      const productId = pathname.split('/').pop();
+      const productRef = doc(db, 'products', productId);
+      const productSnap = await getDoc(productRef);
+      
+      if (productSnap.exists()) {
+        return NextResponse.json({ 
+          product: { id: productSnap.id, ...productSnap.data() } 
+        });
+      } else {
+        return NextResponse.json(
+          { error: 'Product not found' },
+          { status: 404 }
+        );
+      }
+    }
+    
+    return NextResponse.json({ message: 'Pineapple API' });
   } catch (error) {
-    console.error('API Error:', error)
-    return handleCORS(NextResponse.json(
-      { error: "Internal server error" }, 
+    console.error('API Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error.message },
       { status: 500 }
-    ))
+    );
   }
 }
 
-// Export all HTTP methods
-export const GET = handleRoute
-export const POST = handleRoute
-export const PUT = handleRoute
-export const DELETE = handleRoute
-export const PATCH = handleRoute
+// POST handler - for seeding data
+export async function POST(request, { params }) {
+  const pathname = params?.path ? params.path.join('/') : '';
+  
+  try {
+    if (pathname === 'products/seed') {
+      const products = [
+        {
+          name: 'Pineapple Phone 15 Pro',
+          category: 'phone',
+          price: 999,
+          description: 'The most powerful Pineapple Phone yet. Features titanium design, A17 Pro chip, and advanced camera system.',
+          image: 'https://images.unsplash.com/photo-1592286927505-67dd3c29684d?w=800&auto=format&fit=crop',
+          features: ['6.1-inch display', 'A17 Pro chip', 'Triple camera system', '128GB storage'],
+          colors: ['Natural Titanium', 'Blue Titanium', 'White Titanium', 'Black Titanium']
+        },
+        {
+          name: 'Pineapple Phone 15',
+          category: 'phone',
+          price: 799,
+          description: 'All-day battery life. Super Retina XDR display. Dynamic Island. A powerful camera system.',
+          image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=800&auto=format&fit=crop',
+          features: ['6.1-inch display', 'A16 chip', 'Dual camera system', '128GB storage'],
+          colors: ['Pink', 'Yellow', 'Green', 'Blue', 'Black']
+        },
+        {
+          name: 'PineBook Pro',
+          category: 'laptop',
+          price: 1999,
+          description: 'Supercharged by M3 Pro or M3 Max. The most advanced chips ever built for a personal computer.',
+          image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800&auto=format&fit=crop',
+          features: ['14-inch Liquid Retina XDR', 'M3 Pro chip', 'Up to 18 hours battery', '512GB SSD'],
+          colors: ['Space Black', 'Silver']
+        },
+        {
+          name: 'PineBook Air',
+          category: 'laptop',
+          price: 1199,
+          description: 'Incredibly thin and light. M2 chip delivers blazing-fast performance in a fanless design.',
+          image: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=800&auto=format&fit=crop',
+          features: ['13.6-inch display', 'M2 chip', 'Up to 18 hours battery', '256GB SSD'],
+          colors: ['Midnight', 'Starlight', 'Space Gray', 'Silver']
+        },
+        {
+          name: 'PinePad Pro',
+          category: 'tablet',
+          price: 799,
+          description: 'The ultimate tablet experience. M2 chip. All-day battery life. Stunning display.',
+          image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=800&auto=format&fit=crop',
+          features: ['12.9-inch display', 'M2 chip', 'Face ID', '128GB storage'],
+          colors: ['Space Gray', 'Silver']
+        },
+        {
+          name: 'PinePad',
+          category: 'tablet',
+          price: 449,
+          description: 'Colorfully reimagined. All-screen design. Powerful A14 Bionic chip. Fast wireless.',
+          image: 'https://images.unsplash.com/photo-1561154464-82e9adf32764?w=800&auto=format&fit=crop',
+          features: ['10.9-inch display', 'A14 chip', 'Touch ID', '64GB storage'],
+          colors: ['Blue', 'Purple', 'Pink', 'Starlight', 'Space Gray']
+        },
+        {
+          name: 'Pineapple Watch Ultra',
+          category: 'watch',
+          price: 799,
+          description: 'The most rugged and capable Pineapple Watch ever. Titanium case. Extra-long battery life.',
+          image: 'https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=800&auto=format&fit=crop',
+          features: ['49mm titanium case', 'GPS + Cellular', 'Up to 36 hours battery', 'Water resistant'],
+          colors: ['Natural', 'Black']
+        },
+        {
+          name: 'Pineapple Watch Series 9',
+          category: 'watch',
+          price: 399,
+          description: 'A magical way to use your watch without touching the screen. Advanced health features.',
+          image: 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?w=800&auto=format&fit=crop',
+          features: ['45mm case', 'GPS + Cellular', 'Up to 18 hours battery', 'Water resistant'],
+          colors: ['Midnight', 'Starlight', 'Silver', 'Product Red']
+        }
+      ];
+      
+      const productsRef = collection(db, 'products');
+      const addedProducts = [];
+      
+      for (const product of products) {
+        const docRef = await addDoc(productsRef, product);
+        addedProducts.push({ id: docRef.id, ...product });
+      }
+      
+      return NextResponse.json({ 
+        message: 'Products seeded successfully',
+        count: addedProducts.length,
+        products: addedProducts
+      });
+    }
+    
+    return NextResponse.json(
+      { error: 'Invalid endpoint' },
+      { status: 404 }
+    );
+  } catch (error) {
+    console.error('API Error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error', details: error.message },
+      { status: 500 }
+    );
+  }
+}
