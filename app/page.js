@@ -9,10 +9,23 @@ export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [cart, setCart] = useState([]);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [addedToCart, setAddedToCart] = useState(null);
 
   useEffect(() => {
     fetchProducts();
+    // Load cart from localStorage
+    const savedCart = localStorage.getItem('pineappleCart');
+    if (savedCart) {
+      setCart(JSON.parse(savedCart));
+    }
   }, []);
+
+  useEffect(() => {
+    // Save cart to localStorage whenever it changes
+    localStorage.setItem('pineappleCart', JSON.stringify(cart));
+  }, [cart]);
 
   const fetchProducts = async () => {
     try {
