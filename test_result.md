@@ -248,12 +248,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Firebase Firestore integration and configuration"
-    - "GET /api/products - Fetch all products"
-    - "GET /api/products/category/:category - Fetch products by category"
-    - "GET /api/products/:id - Fetch single product"
-    - "POST /api/products/seed - Seed product data"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
