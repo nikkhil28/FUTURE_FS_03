@@ -344,8 +344,14 @@ export default function HomePage() {
                       <p className="text-gray-400 text-sm mb-4 line-clamp-2">{product.description}</p>
                       <div className="flex items-center justify-between">
                         <span className="text-2xl font-bold">${product.price}</span>
-                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700">
-                          Buy
+                        <Button 
+                          size="sm" 
+                          className={`bg-purple-600 hover:bg-purple-700 transition-all ${
+                            addedToCart === product.id ? 'scale-110 bg-green-600' : ''
+                          }`}
+                          onClick={() => addToCart(product)}
+                        >
+                          {addedToCart === product.id ? '✓ Added' : 'Buy'}
                         </Button>
                       </div>
                       {product.colors && product.colors.length > 0 && (
