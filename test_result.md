@@ -216,6 +216,21 @@ frontend:
       - working: "NA"
         agent: "main"
         comment: "Product cards displaying product images, names, descriptions, prices, and available colors. Hover effects and Buy buttons included."
+      - working: true
+        agent: "main"
+        comment: "Enhanced Buy buttons to be fully interactive with add to cart functionality. Visual feedback on click."
+  
+  - task: "Interactive Shopping Cart"
+    implemented: true
+    working: true
+    file: "/app/app/page.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Full shopping cart implemented with: add to cart, cart modal, quantity controls (+/-), remove items, total price calculation, localStorage persistence. Cart icon shows item count badge."
   
   - task: "Navigation with Pineapple branding"
     implemented: true
