@@ -52,6 +52,49 @@ export default function HomePage() {
     }
   };
 
+  const addToCart = (product) => {
+    setCart(prevCart => {
+      const existingItem = prevCart.find(item => item.id === product.id);
+      if (existingItem) {
+        return prevCart.map(item =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prevCart, { ...product, quantity: 1 }];
+    });
+    
+    // Show add to cart animation
+    setAddedToCart(product.id);
+    setTimeout(() => setAddedToCart(null), 1000);
+  };
+
+  const removeFromCart = (productId) => {
+    setCart(prevCart => prevCart.filter(item => item.id !== productId));
+  };
+
+  const updateQuantity = (productId, change) => {
+    setCart(prevCart => {
+      return prevCart.map(item => {
+        if (item.id === productId) {
+          const newQuantity = item.quantity + change;
+          if (newQuantity <= 0) return null;
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      }).filter(Boolean);
+    });
+  };
+
+  const getTotalPrice = () => {
+    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  };
+
+  const getTotalItems = () => {
+    return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
   const categories = [
     { id: 'all', name: 'All Products', icon: null },
     { id: 'phone', name: 'Phones', icon: Smartphone },
