@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronRight, Smartphone, Laptop, Tablet, Watch } from 'lucide-react';
+import { ChevronRight, Smartphone, Laptop, Tablet, Watch, ShoppingCart, X, Minus, Plus } from 'lucide-react';
 
 export default function HomePage() {
   const [products, setProducts] = useState([]);
