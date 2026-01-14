@@ -125,12 +125,129 @@ export default function HomePage() {
                 <a href="#watches" className="hover:text-gray-300 transition">Watches</a>
               </div>
             </div>
-            <Button variant="ghost" className="text-white hover:bg-white/10">
-              Support
-            </Button>
+            <div className="flex items-center space-x-4">
+              <Button 
+                variant="ghost" 
+                className="text-white hover:bg-white/10 relative"
+                onClick={() => setIsCartOpen(true)}
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {getTotalItems() > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+                    {getTotalItems()}
+                  </span>
+                )}
+              </Button>
+              <Button variant="ghost" className="text-white hover:bg-white/10">
+                Support
+              </Button>
+            </div>
           </div>
         </div>
       </nav>
+
+      {/* Cart Modal */}
+      {isCartOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" onClick={() => setIsCartOpen(false)}>
+          <div 
+            className="fixed right-0 top-0 h-full w-full max-w-md bg-zinc-900 shadow-2xl border-l border-white/10 overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Shopping Cart</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsCartOpen(false)}
+                  className="hover:bg-white/10"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+
+              {cart.length === 0 ? (
+                <div className="text-center py-20">
+                  <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-gray-600" />
+                  <p className="text-gray-400">Your cart is empty</p>
+                  <Button
+                    onClick={() => setIsCartOpen(false)}
+                    className="mt-4 bg-purple-600 hover:bg-purple-700"
+                  >
+                    Continue Shopping
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-4 mb-6">
+                    {cart.map((item) => (
+                      <Card key={item.id} className="bg-black border-white/10">
+                        <CardContent className="p-4">
+                          <div className="flex gap-4">
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-20 h-20 object-cover rounded-lg"
+                            />
+                            <div className="flex-1">
+                              <h3 className="font-semibold text-sm mb-1">{item.name}</h3>
+                              <p className="text-purple-400 font-bold text-sm mb-2">${item.price}</p>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-7 w-7 border-white/20 hover:bg-white/10"
+                                  onClick={() => updateQuantity(item.id, -1)}
+                                >
+                                  <Minus className="h-3 w-3" />
+                                </Button>
+                                <span className="text-sm w-8 text-center">{item.quantity}</span>
+                                <Button
+                                  size="icon"
+                                  variant="outline"
+                                  className="h-7 w-7 border-white/20 hover:bg-white/10"
+                                  onClick={() => updateQuantity(item.id, 1)}
+                                >
+                                  <Plus className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-7 w-7 ml-auto text-red-400 hover:bg-red-400/10"
+                                  onClick={() => removeFromCart(item.id)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-white/10 pt-6 space-y-4">
+                    <div className="flex justify-between text-lg font-semibold">
+                      <span>Total</span>
+                      <span className="text-purple-400">${getTotalPrice().toFixed(2)}</span>
+                    </div>
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700 h-12 text-lg">
+                      Checkout
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="w-full border-white/20 hover:bg-white/10"
+                      onClick={() => setIsCartOpen(false)}
+                    >
+                      Continue Shopping
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section className="pt-24 pb-12 px-6">
