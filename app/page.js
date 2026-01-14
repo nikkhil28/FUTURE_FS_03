@@ -259,7 +259,11 @@ export default function HomePage() {
               </h2>
               <p className="text-2xl text-gray-400 mb-8">Premium. Powerful. Pineapple.</p>
               <div className="flex justify-center gap-4 mb-12">
-                <Button size="lg" className="bg-white text-black hover:bg-gray-200">
+                <Button 
+                  size="lg" 
+                  className="bg-white text-black hover:bg-gray-200"
+                  onClick={() => addToCart(featuredProduct)}
+                >
                   Buy Now
                 </Button>
                 <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10">
